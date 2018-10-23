@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+from os.path import isdir
 import numpy as np
 BASE_DIR = os.path.join(os.path.dirname(__file__),'../../../data/Stanford3dDataset_v1.2_Aligned_Version')
 
@@ -22,7 +23,8 @@ object_dict = {
             'bookcase': 11,
             'board':    12}
 
-path_Dir_Areas =  os.listdir(BASE_DIR)
+path_Dir_Areas =  [entry for entry in os.listdir(BASE_DIR)
+                   if isdir(os.path.join(BASE_DIR, entry))]
 
 for Area in path_Dir_Areas:
     path_Dir_Rooms = os.listdir(os.path.join(BASE_DIR,Area))
