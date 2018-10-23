@@ -6,11 +6,13 @@ from __future__ import print_function
 import numpy as np
 
 import os
-from os.path import isdir
+from os import path
+import sys
 
-from definitions import ROOT_DIR
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))  # Enable imports from project root directory
+from definitions import DATA_DIR
 
-BASE_DIR = os.path.join(ROOT_DIR, '../data/Stanford3dDataset_v1.2_Aligned_Version')
+BASE_DIR = path.join(DATA_DIR, 'S3DIS')
 
 object_dict = {
             'clutter':   0,
@@ -27,37 +29,44 @@ object_dict = {
             'bookcase': 11,
             'board':    12}
 
-path_Dir_Areas =  [entry for entry in os.listdir(BASE_DIR)
-                   if isdir(os.path.join(BASE_DIR, entry))]
+path_dir_areas =  [entry for entry in os.listdir(BASE_DIR)
+                   if path.isdir(path.join(BASE_DIR, entry))]
 
-for Area in path_Dir_Areas:
-    path_Dir_Rooms = os.listdir(os.path.join(BASE_DIR,Area))
-    for Room in path_Dir_Rooms:
-        xyz_Room = np.zeros((1,6))
-        label_Room = np.zeros((1,1))
-        path_Annotations = os.path.join(BASE_DIR,Area,Room,"Annotations")
-        print("Annotations path:", path_Annotations)
+if "prepare_label_rgb" in path_dir_areas:
+    path_dir_areas.remove("prepare_label_rgb")
+
+for area in path_dir_areas:
+    print("Area:", area)
+    path_dir_rooms = os.listdir(path.join(BASE_DIR, area))
+    for room in path_dir_rooms:
+        print("Room:", room)
         # make store directories
-        path_prepare_label = os.path.join("../data/S3DIS/prepare_label_rgb",Area,Room)
+        path_prepare_label = path.join(DATA_DIR, "S3DIS", "prepare_label_rgb", area, room)
         if not os.path.exists(path_prepare_label):
             os.makedirs(path_prepare_label)
+        elif len(os.listdir(path_prepare_label)) != 0:
+            print("Room data already exists, skipping.")
+            continue
         #############################
-        path_objects = os.listdir(path_Annotations)
-        for Object in path_objects:
-            if object_dict.has_key(Object.split("_",1)[0]):
-                print(Object.split("_",1)[0] + " value:" ,object_dict[Object.split("_",1)[0]])
-                xyz_object = np.loadtxt(os.path.join(path_Annotations,Object))[:,:]#(N,6)
-                label_object = np.tile([object_dict[Object.split("_",1)[0]]],(xyz_object.shape[0],1))#(N,1)
+        xyz_room_list = list()
+        label_room_list = list()
+        path_annotations = path.join(BASE_DIR, area, room, "Annotations")
+        path_items = os.listdir(path_annotations)
+        for item in path_items:
+            label = item.split("_", 1)[0]
+            if label in object_dict:
+                xyz_object = np.loadtxt(path.join(path_annotations, item)) # (N,6)
+                label_object = np.full((xyz_object.shape[0], 1), object_dict[label])  # (N,1)
             else:
                 continue
 
-            xyz_Room = np.vstack((xyz_Room,xyz_object))
-            label_Room = np.vstack((label_Room,label_object))
+            xyz_room_list.append(xyz_object)
+            label_room_list.append(label_object)
 
-        xyz_Room = np.delete(xyz_Room,[0],0)
-        label_Room = np.delete(label_Room,[0],0)
+        xyz_room = np.vstack(xyz_room_list)
+        label_room = np.vstack(label_room_list)
 
-        np.save(path_prepare_label+"/xyzrgb.npy",xyz_Room)
-        np.save(path_prepare_label+"/label.npy",label_Room)
+        np.save(path.join(path_prepare_label, "xyzrgb.npy"), xyz_room)
+        np.save(path.join(path_prepare_label, "label.npy"), label_room)
 
-
+    print(area, "done.\n")
