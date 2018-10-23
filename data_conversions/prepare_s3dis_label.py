@@ -3,9 +3,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import numpy as np
-BASE_DIR = os.path.join(os.path.dirname(__file__),'../../../data/Stanford3dDataset_v1.2_Aligned_Version')
+import os
+
+from definitions import ROOT_DIR
+
+BASE_DIR = os.path.join(ROOT_DIR, '../data/Stanford3dDataset_v1.2_Aligned_Version')
 
 object_dict = {
             'clutter':   0,
@@ -30,9 +33,9 @@ for Area in path_Dir_Areas:
         xyz_Room = np.zeros((1,6))
         label_Room = np.zeros((1,1))
         path_Annotations = os.path.join(BASE_DIR,Area,Room,"Annotations")
-        print(path_Annotations)
+        print("Annotations path:", path_Annotations)
         # make store directories
-        path_prepare_label = os.path.join("../../../data/S3DIS/prepare_label_rgb",Area,Room)
+        path_prepare_label = os.path.join("../data/S3DIS/prepare_label_rgb",Area,Room)
         if not os.path.exists(path_prepare_label):
             os.makedirs(path_prepare_label)
         #############################

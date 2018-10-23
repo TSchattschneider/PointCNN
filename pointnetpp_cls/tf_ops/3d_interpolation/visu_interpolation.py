@@ -1,7 +1,7 @@
 ''' Visualize part segmentation '''
 import os
 import sys
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append('/home/rqi/Projects/toolkits/visualization')
 from show3d_balls import showpoints
 import numpy as np

@@ -10,9 +10,9 @@ import os
 
 gt_label_filenames = []
 pred_label_filenames = []
-DATA_DIR = os.listdir("../../data/S3DIS")
+S3DIS_DIR = os.listdir("../../data/S3DIS")
 
-for area in DATA_DIR:
+for area in S3DIS_DIR:
     Rooms = os.listdir(os.path.join("../../data/S3DIS",area))
     for room in Rooms:
         path_gt_label = os.path.join("../../data/S3DIS",area,room,'label.npy')
