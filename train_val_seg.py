@@ -37,14 +37,12 @@ def main():
     sys.stdout = open(os.path.join(root_folder, 'log.txt'), 'w')
 
     print('PID:', os.getpid())
-
     print(args)
 
     model = importlib.import_module(args.model)
     setting_path = os.path.join(os.path.dirname(__file__), args.model)
     sys.path.append(setting_path)
     setting = importlib.import_module(args.setting)
-
     num_epochs = setting.num_epochs
     batch_size = setting.batch_size
     sample_num = setting.sample_num
@@ -169,7 +167,7 @@ def main():
 
     # backup all code
     code_folder = os.path.abspath(os.path.dirname(__file__))
-    shutil.copytree(code_folder, os.path.join(root_folder, os.path.basename(code_folder)))
+    shutil.copytree(code_folder, os.path.join(root_folder, os.path.basename(code_folder)), symlinks=True)
 
     folder_ckpt = os.path.join(root_folder, 'ckpts')
     if not os.path.exists(folder_ckpt):
