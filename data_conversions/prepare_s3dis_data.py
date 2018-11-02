@@ -13,8 +13,9 @@ import argparse
 import numpy as np
 from datetime import datetime
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Enable imports from project root
 import data_utils
+from meta_definitions import DATA_DIR
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    root = args.folder if args.folder else '../../data/s3dis'
+    root = args.folder if args.folder else os.path.join(DATA_DIR, "S3DIS", "prepare_label_rgb")
     max_point_num = args.max_point_num
 
     batch_size = 2048

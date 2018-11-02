@@ -10,7 +10,7 @@ from os import path
 import sys
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))  # Enable imports from project root directory
-from definitions import DATA_DIR
+from meta_definitions import DATA_DIR
 
 BASE_DIR = path.join(DATA_DIR, 'S3DIS')
 
