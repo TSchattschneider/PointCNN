@@ -1,28 +1,22 @@
-# PointCNN
+# PointCNN: Convolution On X-Transformed Points (NIPS 2018)
 
-Created by <a href="http://yangyan.li" target="_blank">Yangyan Li</a>,<a href="http://rbruibu.cn" target="_blank"> Rui Bu</a>, <a href="http://www.mcsun.cn" target="_blank">Mingchao Sun</a>, <a href="https://www.weiwu35.com/" target="_blank">Wei Wu</a>, and <a href="http://www.cs.sdu.edu.cn/~baoquan/" target="_blank">Baoquan Chen</a> from Shandong University.
-
-
-**Yangyan, Rui, Mingchao and Wei are hired by Alibaba AI Labs, working on 3D perception for autonomous driving. Join us for making the world a better place!**
+Created by <a href="http://yangyan.li" target="_blank">Yangyan Li</a>, Rui Bu, Mingchao Sun, Wei Wu, Xinhan Di, and Baoquan Chen.
 
 ## Introduction
-You can download pretrained models<a href="https://1drv.ms/f/s!AiHh4BK32df6gYFCzzpRz0nsJmQxSg" target="_blank"> here</a>.
 
 PointCNN is a simple and general framework for feature learning from point cloud, which refreshed five benchmark records in point cloud processing (as of Jan. 23, 2018), including:
 
 * classification accuracy on ModelNet40 (**91.7%**, with 1024 input points only)
 * classification accuracy on ScanNet (**77.9%**)
 * segmentation part averaged IoU on ShapeNet Parts (**86.13%**)
-* segmentation mean IoU on S3DIS (**62.74%**)
+* segmentation mean IoU on S3DIS (**65.39%**)
 * per voxel labelling accuracy on ScanNet (**85.1%**)
 
-PointCNN achieved 84.4% accuracy on ModelNet40 classification with only 32 input points, which outperforms <a href="https://github.com/charlesq34/pointnet" target="_blank">PointNet</a> and <a href="https://github.com/charlesq34/pointnet2" target="_blank">PointNet++</a> with a 18.3% accuracy gap, making PointCNN quite promising for real time recognition applications with low resolution point cloud input, such as **autonomous driving**, as well as **robotics** in general.
+See our <a href="http://arxiv.org/abs/1801.07791" target="_blank">preprint on arXiv</a> for more details.
 
-See our <a href="http://arxiv.org/abs/1801.07791" target="_blank">PointCNN paper on arXiv</a> for more details.
+Pretrained models can be downloaded from <a href="https://1drv.ms/f/s!AiHh4BK32df6gYFCzzpRz0nsJmQxSg" target="_blank">here</a>.
 
 **We highly welcome issues, rather than emails, for PointCNN related questions.**
-
-**We are working actively on Semantic3D dataset, stay tuned.**
 
 ## License
 Our code is released under MIT License (see LICENSE file for details).
@@ -190,6 +184,7 @@ Here we list the commands for training/evaluating PointCNN on classification and
   mkdir ../../data/semantic3d/val
   mv ../../data/semantic3d/train/bildstein_station3_xyz_intensity_rgb.* ../../data/semantic3d/train/domfountain_station2_xyz_intensity_rgb.* ../../data/semantic3d/train/sg27_station4_intensity_rgb.* ../../data/semantic3d/train/untermaederbrunnen_station3_xyz_intensity_rgb.* ../../data/semantic3d/val
   python3 prepare_semantic3d_data.py
+  mkdir ../../data/semantic3d/filelists
   python3 prepare_semantic3d_filelists.py
   cd ../pointcnn_seg
   ./train_val_semantic3d.sh -g 0 -x semantic3d_x4_2048_fps
