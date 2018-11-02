@@ -165,7 +165,6 @@ def main():
 
                         ind_in_room = point_indices[start:end]
                         indices_split_to_full[idx_in_batch, 0:point_num] = np.stack([np.zeros_like(ind_in_room) + room_idx ,ind_in_room], -1)
-                            
 
                         if ((idx + 1) % batch_size == 0) \
                                 or (room_idx == len(xyz_all) - 1
