@@ -26,12 +26,13 @@ class AttrDict(dict):
 if __name__ == '__main__':
     args = AttrDict()
     args.model = 'pointcnn_seg'
-    args.setting = "scannet_x8_2048_fps"
+    args.setting = "scenenn_x8_2048_fps"
     args.load_ckpt = "../models/pretrained_scannet_PointCNN/iter-354000"
-    args.filelist = "data/scannet_pointnet2/test_files.txt"
+    args.data_folder = "data/SceneNN/extended_blocks"
+    args.file_names = ["scenenn_seg_045.hdf5"]
     args.max_point_num = 8192
     args.repeat_num = 4
-    args.save_ply = False
+    args.save_ply = True
 
     model = importlib.import_module(args.model)
     setting_path = os.path.join(os.path.dirname(__file__), args.model)
@@ -69,11 +70,10 @@ if __name__ == '__main__':
 
         indices_batch_indices = np.tile(np.reshape(np.arange(batch_size), (batch_size, 1, 1)), (1, sample_num, 1))
 
-        folder = os.path.dirname(args.filelist)
-        filenames = [os.path.join(folder, line.strip()) for line in open(args.filelist)]
-        for filename in filenames:
-            print('{}-Reading {}...'.format(datetime.now(), filename))
-            data_h5 = h5py.File(filename)
+        filepaths = [os.path.join(args.data_folder, filename) for filename in args.file_names]
+        for filepath in filepaths:
+            print('{}-Reading {}...'.format(datetime.now(), filepath))
+            data_h5 = h5py.File(filepath)
             data = data_h5['data'][...].astype(np.float32)
             data_num = data_h5['data_num'][...].astype(np.int32)
             batch_num = data.shape[0]
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 labels_pred[batch_idx, 0:point_num] = np.array([label for label, _ in predictions])
                 confidences_pred[batch_idx, 0:point_num] = np.array([confidence for _, confidence in predictions])
 
-            filename_pred = filename[:-3] + '_pred.h5'
+            filename_pred = filepath[:-5] + '_pred.h5'
             print('{}-Saving {}...'.format(datetime.now(), filename_pred))
             file = h5py.File(filename_pred, 'w')
             file.create_dataset('data_num', data=data_num)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
             if args.save_ply:
                 print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
-                filepath_label_ply = os.path.join(filename_pred[:-3] + 'ply_label')
+                filepath_label_ply = os.path.join(filename_pred[:-5] + 'ply_label')
                 data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
                                                    filepath_label_ply, data_num[...], setting.num_class)
             ######################################################################
