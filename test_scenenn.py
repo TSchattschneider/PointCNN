@@ -86,9 +86,9 @@ if __name__ == '__main__':
                 if batch_idx % 10 == 0:
                     print('{}-Processing {} of {} batches.'.format(datetime.now(), batch_idx, batch_num))
                 points_batch = data[[batch_idx] * batch_size, ...]
-                point_num = data_num[batch_idx]
+                point_num = data_num[batch_idx]  # 4096
 
-                tile_num = math.ceil((sample_num * batch_size) / point_num)
+                tile_num = math.ceil((sample_num * batch_size) / point_num)  # 8192 / 4096 = 2
                 indices_shuffle = np.tile(np.arange(point_num), tile_num)[0:sample_num * batch_size]
                 np.random.shuffle(indices_shuffle)
                 indices_batch_shuffle = np.reshape(indices_shuffle, (batch_size, sample_num, 1))
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
             if args.save_ply:
                 print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
-                filepath_label_ply = os.path.join(filename_pred[:-5] + 'ply_label')
+                filepath_label_ply = os.path.join(filename_pred[:-5] + '_ply_label')
                 data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
                                                    filepath_label_ply, data_num[...], setting.num_class)
             ######################################################################
