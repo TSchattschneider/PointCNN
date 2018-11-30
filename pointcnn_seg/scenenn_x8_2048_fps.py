@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 import math
 
-num_class = 21
+num_class = 41
 
 sample_num = 2048
 
-batch_size = 16
+batch_size = 8
 
 num_epochs = 1024
 

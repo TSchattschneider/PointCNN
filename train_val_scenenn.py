@@ -9,38 +9,51 @@ import os
 import sys
 import math
 import random
-import shutil
-import argparse
 import importlib
 import data_utils
+from meta_definitions import DATA_DIR, ROOT_DIR
 import numpy as np
 import pointfly as pf
 import tensorflow as tf
 from datetime import datetime
 
+SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN')
+
+
+class AttrDict(dict):
+    """Allows to address keys as if they were attributes."""
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--filelist', '-t', help='Path to training set ground truth (.txt)', required=True)
-    parser.add_argument('--filelist_val', '-v', help='Path to validation set ground truth (.txt)', required=True)
-    parser.add_argument('--load_ckpt', '-l', help='Path to a check point file for load')
-    parser.add_argument('--save_folder', '-s', help='Path to folder for saving check points and summary', required=True)
-    parser.add_argument('--model', '-m', help='Model to use', required=True)
-    parser.add_argument('--setting', '-x', help='Setting to use', required=True)
-    args = parser.parse_args()
+    args = AttrDict()
+    # Path of training set ground truth file list (.txt)
+    args.filelist = os.path.join(SCENENN_DIR, 'train_files.txt')
+    # Path of validation set ground truth file list (.txt)
+    args.filelist_val = os.path.join(SCENENN_DIR, 'test_files.txt')
+    # Path of a check point file to load
+    args.load_ckpt = None
+    # Base directory where model checkpoint and summary files get saved in separate subdirectories
+    args.save_folder = os.path.join(ROOT_DIR, '..', 'models')
+    # PointCNN model to use
+    args.model = 'pointcnn_seg'
+    # Model setting to use
+    args.setting = 'scenenn_x8_2048_fps'
 
     time_string = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-    root_folder = os.path.join(args.save_folder, '%s_%s_%s_%d' % (args.model, args.setting, time_string, os.getpid()))
-    if not os.path.exists(root_folder):
-        os.makedirs(root_folder)
+    model_save_folder = os.path.join(args.save_folder,
+                                     '%s_%s_%s_%d' % (args.model, args.setting, time_string, os.getpid()))
+    if not os.path.exists(model_save_folder):
+        os.makedirs(model_save_folder)
 
-    # sys.stdout = open(os.path.join(root_folder, 'log.txt'), 'w')
+    # sys.stdout = open(os.path.join(model_save_folder, 'log.txt'), 'w')
 
     print('PID:', os.getpid())
     print(args)
 
     model = importlib.import_module(args.model)
-    setting_path = os.path.join(os.path.dirname(__file__), args.model)
+    setting_path = os.path.join(ROOT_DIR, args.model)
     sys.path.append(setting_path)
     setting = importlib.import_module(args.setting)
     num_epochs = setting.num_epochs
@@ -139,7 +152,6 @@ def main():
     reset_metrics_op = tf.variables_initializer([var for var in tf.local_variables()
                                                  if var.name.split('/')[0] == 'metrics'])
 
-
     _ = tf.summary.scalar('loss/train', tensor=loss_mean_op, collections=['train'])
     _ = tf.summary.scalar('t_1_acc/train', tensor=t_1_acc_op, collections=['train'])
     _ = tf.summary.scalar('t_1_per_class_acc/train', tensor=t_1_per_class_acc_op, collections=['train'])
@@ -167,13 +179,13 @@ def main():
 
     # backup all code
     # code_folder = os.path.abspath(os.path.dirname(__file__))
-    # shutil.copytree(code_folder, os.path.join(root_folder, os.path.basename(code_folder)), symlinks=True)
+    # shutil.copytree(code_folder, os.path.join(model_save_folder, os.path.basename(code_folder)), symlinks=True)
 
-    folder_ckpt = os.path.join(root_folder, 'ckpts')
+    folder_ckpt = os.path.join(model_save_folder, 'ckpts')
     if not os.path.exists(folder_ckpt):
         os.makedirs(folder_ckpt)
 
-    folder_summary = os.path.join(root_folder, 'summary')
+    folder_summary = os.path.join(model_save_folder, 'summary')
     if not os.path.exists(folder_summary):
         os.makedirs(folder_summary)
 
