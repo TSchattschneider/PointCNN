@@ -27,10 +27,10 @@ if __name__ == '__main__':
     args = AttrDict()
     args.model = 'pointcnn_seg'
     args.setting = "scenenn_x8_2048_fps"
-    args.load_ckpt = "../models/pretrained_scannet_PointCNN/iter-354000"
-    args.data_folder = "data/SceneNN/extended_blocks"
-    args.file_names = ["scenenn_seg_045.hdf5"]
-    args.max_point_num = 8192
+    args.load_ckpt = "../models/pointcnn_seg_scenenn_x8_2048_fps_2018-11-30-17-12-21_29945/ckpts/iter-2000"
+    args.data_folder = "data/SceneNN/preprocessed"
+    args.file_names = ["scenenn_seg_237.hdf5"]
+    args.max_point_num = 4096
     args.repeat_num = 4
     args.save_ply = True
 
@@ -114,19 +114,23 @@ if __name__ == '__main__':
                 confidences_pred[batch_idx, 0:point_num] = np.array([confidence for _, confidence in predictions])
 
             filename_pred = filepath[:-5] + '_pred.h5'
-            print('{}-Saving {}...'.format(datetime.now(), filename_pred))
-            file = h5py.File(filename_pred, 'w')
-            file.create_dataset('data_num', data=data_num)
-            file.create_dataset('label_seg', data=labels_pred)
-            file.create_dataset('confidence', data=confidences_pred)
-            has_indices = 'indices_split_to_full' in data_h5
-            if has_indices:
-                file.create_dataset('indices_split_to_full', data=data_h5['indices_split_to_full'][...])
-            file.close()
+            # print('{}-Saving {}...'.format(datetime.now(), filename_pred))
+            # file = h5py.File(filename_pred, 'w')
+            # file.create_dataset('data_num', data=data_num)
+            # file.create_dataset('label_seg', data=labels_pred)
+            # file.create_dataset('confidence', data=confidences_pred)
+            # has_indices = 'indices_split_to_full' in data_h5
+            # if has_indices:
+            #     file.create_dataset('indices_split_to_full', data=data_h5['indices_split_to_full'][...])
+            # file.close()
 
             if args.save_ply:
                 print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
-                filepath_label_ply = os.path.join(filename_pred[:-5] + '_ply_label')
+                scene_name = os.path.splitext(os.path.basename(filepath))[0]  # Get filename without extension
+                ply_folder = os.path.join(os.path.dirname(filepath), scene_name + '_pred_ply')  # Create subfolder
+                if not os.path.exists(os.path.dirname(ply_folder)):
+                    os.makedirs(os.path.dirname(ply_folder))
+                filepath_label_ply = os.path.join(ply_folder, scene_name + '_ply_label')
                 data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
                                                    filepath_label_ply, data_num[...], setting.num_class)
             ######################################################################
