@@ -3,10 +3,12 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+
 import h5py
-import plyfile
-import numpy as np
 from matplotlib import cm
+import numpy as np
+import plyfile
+from tqdm import trange
 
 
 def save_ply(points, filename, colors=None, normals=None):
@@ -90,7 +92,7 @@ def save_ply_property_batch(points_batch, property_batch, file_path, points_num=
         basename = os.path.splitext(file_path)[0]
         ext = '.ply'
     property_max = np.max(property_batch) if property_max is None else property_max
-    for batch_idx in range(batch_size):
+    for batch_idx in trange(batch_size):
         point_num = points_batch.shape[1] if points_num is None else points_num[batch_idx]
         if type(file_path) == list:
             save_ply_property(points_batch[batch_idx][:point_num], property_batch[batch_idx][:point_num],
