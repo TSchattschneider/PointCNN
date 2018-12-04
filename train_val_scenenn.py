@@ -5,19 +5,22 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import sys
-import math
-import random
+from datetime import datetime
 import importlib
+import math
+import os
+import random
+import sys
+
+import numpy as np
+import tensorflow as tf
+from tqdm import trange
+
 import data_utils
 from meta_definitions import DATA_DIR, ROOT_DIR
-import numpy as np
 import pointfly as pf
-import tensorflow as tf
-from datetime import datetime
 
-SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN')
+SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN', 'preprocessed')
 
 
 class AttrDict(dict):
@@ -31,7 +34,7 @@ def main():
     # Path of training set ground truth file list (.txt)
     args.filelist = os.path.join(SCENENN_DIR, 'train_files.txt')
     # Path of validation set ground truth file list (.txt)
-    args.filelist_val = os.path.join(SCENENN_DIR, 'test_files.txt')
+    args.filelist_val = os.path.join(SCENENN_DIR, 'validation_files.txt')
     # Path of a check point file to load
     args.load_ckpt = None
     # Base directory where model checkpoint and summary files get saved in separate subdirectories
@@ -204,7 +207,7 @@ def main():
             saver.restore(sess, args.load_ckpt)
             print('{}-Checkpoint loaded from {}!'.format(datetime.now(), args.load_ckpt))
 
-        for batch_idx_train in range(batch_num):
+        for batch_idx_train in trange(batch_num):
             if (batch_idx_train % step_val == 0 and (batch_idx_train != 0 or args.load_ckpt is not None)) \
                     or batch_idx_train == batch_num - 1:
                 ######################################################################
