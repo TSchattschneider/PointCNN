@@ -5,16 +5,18 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from datetime import datetime
+import importlib
+import math
 import os
 import sys
-import math
+
 import h5py
-import argparse
-import importlib
-import data_utils
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
+from tqdm import trange
+
+import data_utils
 
 
 class AttrDict(dict):
@@ -27,9 +29,9 @@ if __name__ == '__main__':
     args = AttrDict()
     args.model = 'pointcnn_seg'
     args.setting = "scenenn_x8_2048_fps"
-    args.load_ckpt = "../models/pointcnn_seg_scenenn_x8_2048_fps_2018-11-30-17-12-21_29945/ckpts/iter-2000"
-    args.data_folder = "data/SceneNN/preprocessed"
-    args.file_names = ["scenenn_seg_237.hdf5"]
+    args.load_ckpt = "../models/pointcnn_seg_scenenn_x8_2048_fps_2018-12-04-11-52-47_15817/ckpts/iter-14000"
+    args.data_folder = "data/SceneNN/preprocessed/test"
+    args.file_names = ["scenenn_seg_082.hdf5"]
     args.max_point_num = 4096
     args.repeat_num = 4
     args.save_ply = True
@@ -82,9 +84,7 @@ if __name__ == '__main__':
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
             print('{}-{:d} testing batches.'.format(datetime.now(), batch_num))
-            for batch_idx in range(batch_num):
-                if batch_idx % 10 == 0:
-                    print('{}-Processing {} of {} batches.'.format(datetime.now(), batch_idx, batch_num))
+            for batch_idx in trange(batch_num):
                 points_batch = data[[batch_idx] * batch_size, ...]
                 point_num = data_num[batch_idx]  # 4096
 
@@ -95,11 +95,11 @@ if __name__ == '__main__':
                 indices_batch = np.concatenate((indices_batch_indices, indices_batch_shuffle), axis=2)
 
                 seg_probs = sess.run([seg_probs_op],
-                                        feed_dict={
-                                            pts_fts: points_batch,
-                                            indices: indices_batch,
-                                            is_training: False,
-                                        })
+                                     feed_dict={
+                                         pts_fts: points_batch,
+                                         indices: indices_batch,
+                                         is_training: False,
+                                     })
                 probs_2d = np.reshape(seg_probs, (sample_num * batch_size, -1))
 
                 predictions = [(-1, 0.0)] * point_num
@@ -127,10 +127,11 @@ if __name__ == '__main__':
             if args.save_ply:
                 print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
                 scene_name = os.path.splitext(os.path.basename(filepath))[0]  # Get filename without extension
-                ply_folder = os.path.join(os.path.dirname(filepath), scene_name + '_pred_ply')  # Create subfolder
+                # Create subfolder
+                ply_folder = os.path.join(os.path.dirname(filepath), os.pardir, 'preds', scene_name)
                 if not os.path.exists(os.path.dirname(ply_folder)):
-                    os.makedirs(os.path.dirname(ply_folder))
-                filepath_label_ply = os.path.join(ply_folder, scene_name + '_ply_label')
+                    os.makedirs(ply_folder)
+                filepath_label_ply = os.path.join(ply_folder, scene_name)
                 data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
                                                    filepath_label_ply, data_num[...], setting.num_class)
             ######################################################################
