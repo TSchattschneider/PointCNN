@@ -12,6 +12,22 @@ from tqdm import trange
 
 
 def save_ply(points, filename, colors=None, normals=None):
+    """Save a point cloud to a .ply file for visualization.
+
+    Parameters
+    ----------
+    points: numpy.ndarray
+        Numpy array in a (num_points, 3) format, so for 100 points this would be a 100 x 3 array.
+        The three columns are for X, Y and Z.
+
+    filename: str
+        Full absolute output filepath
+
+    colors: numpy.ndarray
+        Numpy array in a (num_points, 3) format, so for 100 points this would be a 100 x 3 array.
+        The three columns are for R, G, and B, each scaled from 0.0 to 1.0.
+        Can be omitted. If provided, the output file will get additional color data.
+    """
     vertex = np.core.records.fromarrays(points.transpose(), names='x, y, z', formats='f4, f4, f4')
     n = len(vertex)
     desc = vertex.dtype.descr
@@ -92,7 +108,7 @@ def save_ply_property_batch(points_batch, property_batch, file_path, points_num=
         basename = os.path.splitext(file_path)[0]
         ext = '.ply'
     property_max = np.max(property_batch) if property_max is None else property_max
-    for batch_idx in trange(batch_size):
+    for batch_idx in trange(batch_size, ncols=60):
         point_num = points_batch.shape[1] if points_num is None else points_num[batch_idx]
         if type(file_path) == list:
             save_ply_property(points_batch[batch_idx][:point_num], property_batch[batch_idx][:point_num],
