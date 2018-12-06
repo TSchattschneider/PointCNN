@@ -12,6 +12,7 @@ import os
 import sys
 
 import h5py
+from matplotlib import cm
 import numpy as np
 import tensorflow as tf
 from tqdm import trange
@@ -29,9 +30,9 @@ if __name__ == '__main__':
     args = AttrDict()
     args.model = 'pointcnn_seg'
     args.setting = "scenenn_x8_2048_fps"
-    args.load_ckpt = "../models/pointcnn_seg_scenenn_x8_2048_fps_2018-12-04-11-52-47_15817/ckpts/iter-14000"
+    args.load_ckpt = "../models/pointcnn_seg_scenenn_x8_2048_fps_2018-12-04-15-20-55_23790/ckpts/iter-108000"
     args.data_folder = "data/SceneNN/preprocessed/test"
-    args.file_names = ["scenenn_seg_082.hdf5"]
+    args.file_names =  os.listdir(args.data_folder)
     args.max_point_num = 4096
     args.repeat_num = 4
     args.save_ply = True
@@ -84,7 +85,7 @@ if __name__ == '__main__':
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
             print('{}-{:d} testing batches.'.format(datetime.now(), batch_num))
-            for batch_idx in trange(batch_num):
+            for batch_idx in trange(batch_num, ncols=60):
                 points_batch = data[[batch_idx] * batch_size, ...]
                 point_num = data_num[batch_idx]  # 4096
 
@@ -113,26 +114,32 @@ if __name__ == '__main__':
                 labels_pred[batch_idx, 0:point_num] = np.array([label for label, _ in predictions])
                 confidences_pred[batch_idx, 0:point_num] = np.array([confidence for _, confidence in predictions])
 
-            filename_pred = filepath[:-5] + '_pred.h5'
-            # print('{}-Saving {}...'.format(datetime.now(), filename_pred))
-            # file = h5py.File(filename_pred, 'w')
-            # file.create_dataset('data_num', data=data_num)
-            # file.create_dataset('label_seg', data=labels_pred)
-            # file.create_dataset('confidence', data=confidences_pred)
-            # has_indices = 'indices_split_to_full' in data_h5
-            # if has_indices:
-            #     file.create_dataset('indices_split_to_full', data=data_h5['indices_split_to_full'][...])
-            # file.close()
+            scene_name = os.path.splitext(os.path.basename(filepath))[0]  # Get filename without extension
+            predictions_folder = os.path.join(os.path.dirname(args.load_ckpt), os.pardir, 'predictions')
+            filename_pred = os.path.join(predictions_folder, scene_name + '_pred.h5')
+            print('{}-Saving {}...'.format(datetime.now(), filename_pred))
+            file = h5py.File(filename_pred, 'w')
+            file.create_dataset('data_num', data=data_num)
+            file.create_dataset('label_seg', data=labels_pred)
+            file.create_dataset('confidence', data=confidences_pred)
+            has_indices = 'indices_split_to_full' in data_h5
+            if has_indices:
+                file.create_dataset('indices_split_to_full', data=data_h5['indices_split_to_full'][...])
+            file.close()
 
             if args.save_ply:
-                print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
-                scene_name = os.path.splitext(os.path.basename(filepath))[0]  # Get filename without extension
+                print('{}-Saving ply of {}...'.format(datetime.now(), filepath))
                 # Create subfolder
-                ply_folder = os.path.join(os.path.dirname(filepath), os.pardir, 'preds', scene_name)
-                if not os.path.exists(os.path.dirname(ply_folder)):
-                    os.makedirs(ply_folder)
-                filepath_label_ply = os.path.join(ply_folder, scene_name)
-                data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
-                                                   filepath_label_ply, data_num[...], setting.num_class)
+                if not os.path.exists(os.path.dirname(predictions_folder)):
+                    os.makedirs(predictions_folder)
+
+                # Create point colors according to labels
+                cmap = cm.get_cmap('tab20')
+                label_max = setting.num_class
+                cmap_LUT = [cmap(label / label_max)[:3] for label in range(label_max)]
+                cmap_LUT[0] = (0.0, 0.0, 0.0)
+                colors = np.array([cmap_LUT[label] for label in labels_pred.ravel()])
+
+                data_utils.save_ply(data.reshape(-1, 3), os.path.join(predictions_folder, scene_name + '.ply'), colors)
             ######################################################################
         print('{}-Done!'.format(datetime.now()))
