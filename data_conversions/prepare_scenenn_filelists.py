@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sklearn.model_selection import train_test_split
 
-data_dir = Path.home() / 'Thesis/data/SceneNN/preprocessed_rgb'
+data_dir = Path.home() / 'Thesis/data/SceneNN/preprocessed_two_way_split'
 train_dir = data_dir / 'train'
 val_dir = data_dir / 'validation'
 test_dir = data_dir / 'test'
@@ -16,6 +16,17 @@ test_filelist = Path(data_dir / 'test_files.txt')
 
 
 def random_split(args):
+    if args.three_way:
+        three_way_random_split(args)
+    else:
+        two_way_random_split(args)
+
+
+def two_way_random_split(args):
+    pass
+
+
+def three_way_random_split(args):
     h5files = list(data_dir.glob('*.hdf5'))
 
     # Split data into subdirectories
@@ -116,7 +127,8 @@ def filelist_split(args):
             destination = test_dir / file
             filepath.replace(destination)
 
-if __name__ == '__main__':
+
+def main():
     parser = argparse.ArgumentParser("Group SceneNN HDF5 files into datasets.")
     subparsers = parser.add_subparsers()
 
@@ -124,6 +136,8 @@ if __name__ == '__main__':
     parser_random.add_argument('--chunk_size', type=int, default=8,
                                help='Size of training file chunks,'
                                     'specifies how many h5 files will be loaded at training time.')
+    parser_random.add_argument('--three_way', help='Perform a three-way split instead of a train/test-split.',
+                               action='store_true')
     parser_random.set_defaults(func=random_split)
 
     parser_filelist = subparsers.add_parser('filelist_split')
@@ -131,3 +145,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     args.func(args)
+
+
+if __name__ == '__main__':
+    main()
