@@ -75,13 +75,12 @@ def random_split(args):
 
 
 def filelist_split(args):
+    '''Split data into sets as specified by filelists.'''
     h5files = list(data_dir.glob('*.hdf5'))
 
-    # Split data into subdirectories
     if any(h5files):
 
         # Read existing splits from filelists
-
         files_train = list()
         with train_filelist.open(mode='r') as txt:
             chunks_paths = [Path(line) for line in txt.read().splitlines()]
