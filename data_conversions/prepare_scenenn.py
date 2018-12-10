@@ -18,7 +18,7 @@ def main():
 
     sceneNN_folder = Path(DATA_DIR, 'SceneNN/untouched')
     output_folder = Path(DATA_DIR, 'SceneNN/preprocessed_rgb')
-    logging.debug(f"Reading from folder: {sceneNN_folder}")
+    logging.info(f"Reading from folder: {sceneNN_folder}")
 
     h5_filenames = list(sceneNN_folder.glob('*seg*.hdf5'))
 
@@ -27,7 +27,7 @@ def main():
         logging.debug(f"Loading {h5_filename}. Scene {idx} / {len(h5_filenames)}...")
         target_filepath = output_folder / h5_filename.name
         if target_filepath.exists():
-            logging.debug(f"Skipping {h5_filename.name}. File already exists.")
+            logging.info(f"Skipping {h5_filename.name}. File already exists.")
         else:
             with h5py.File(h5_filename, 'r') as h5file:
                 data = np.array(h5file['data'])
@@ -36,8 +36,8 @@ def main():
                 # Only keep the XYZ dimensions, discard color for now
                 # data = data[:, :, 9:12]
 
-                # Keep XYZ[9:12] and color[6:9] data, discard the rest
-                data = data[:, :, 6:12]
+                # Keep RGB[6:9] and XYZ[9:12] data and reorder it to get [X Y Z R G B], discard the rest
+                data = data[:, :, [9, 10, 11, 6, 7, 8]]
 
                 # Fields required by 'load_seg' function of PointCNN
                 data_num = np.full(data.shape[0], data.shape[1])
