@@ -5,10 +5,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 from datetime import datetime
 import importlib
 import math
-import os
+from pathlib import Path
 import sys
 
 import h5py
@@ -20,26 +21,24 @@ from tqdm import trange
 import data_utils
 
 
-class AttrDict(dict):
-    """Allows to address keys as if they were attributes."""
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--filelist', '-t', help='Path to input .h5 filelist (.txt)', required=True)
+    parser.add_argument('--load_ckpt', '-l', help='Path to a check point file for load', required=True)
+    parser.add_argument('--max_point_num', '-p', help='Max point number of each sample', type=int, default=4096)
+    parser.add_argument('--repeat_num', '-r', help='Repeat number', type=int, default=1)
+    parser.add_argument('--model', '-m', help='Model to use', required=True)
+    parser.add_argument('--setting', '-x', help='Setting to use', required=True)
+    parser.add_argument('--save_ply', '-s', help='Save results as ply', action='store_true')
+    args = parser.parse_args()
 
-
-if __name__ == '__main__':
-    args = AttrDict()
-    args.model = 'pointcnn_seg'
-    args.setting = "scenenn_x8_2048_fps"
-    args.load_ckpt = "../models/pointcnn_seg_scenenn_x8_2048_fps_2018-12-04-15-20-55_23790/ckpts/iter-108000"
-    args.data_folder = "data/SceneNN/preprocessed/test"
-    args.file_names =  os.listdir(args.data_folder)
-    args.max_point_num = 4096
-    args.repeat_num = 4
-    args.save_ply = True
+    # Convert relative checkpoint path to absolute path
+    if args.load_ckpt:
+        args.load_ckpt = Path(args.load_ckpt).resolve()
 
     model = importlib.import_module(args.model)
-    setting_path = os.path.join(os.path.dirname(__file__), args.model)
-    sys.path.append(setting_path)
+    setting_path = Path(__file__).parent / args.model
+    sys.path.append(str(setting_path))
     setting = importlib.import_module(args.setting)
 
     sample_num = setting.sample_num
@@ -54,8 +53,17 @@ if __name__ == '__main__':
     ######################################################################
 
     ######################################################################
-    points_sampled = tf.gather_nd(pts_fts, indices=indices, name='pts_fts_sampled')
-    features_sampled = None
+    pts_fts_sampled = tf.gather_nd(pts_fts, indices=indices, name='pts_fts_sampled')
+    if setting.data_dim > 3:
+        points_sampled, features_sampled = tf.split(pts_fts_sampled,
+                                                    [3, setting.data_dim - 3],
+                                                    axis=-1,
+                                                    name='split_points_features')
+        if not setting.use_extra_features:
+            features_sampled = None
+    else:
+        points_sampled = pts_fts_sampled
+        features_sampled = None
 
     net = model.Net(points_sampled, features_sampled, is_training, setting)
     seg_probs_op = tf.nn.softmax(net.logits, name='seg_probs')
@@ -68,12 +76,12 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         # Load the model
-        saver.restore(sess, args.load_ckpt)
-        print('{}-Checkpoint loaded from {}!'.format(datetime.now(), args.load_ckpt))
+        saver.restore(sess, str(args.load_ckpt))
+        print('{}-Checkpoint loaded from {}.'.format(datetime.now(), args.load_ckpt))
 
         indices_batch_indices = np.tile(np.reshape(np.arange(batch_size), (batch_size, 1, 1)), (1, sample_num, 1))
 
-        filepaths = [os.path.join(args.data_folder, filename) for filename in args.file_names]
+        filepaths = [Path(args.filelist).parent / line.strip() for line in open(args.filelist)]
         for filepath in filepaths:
             print('{}-Reading {}...'.format(datetime.now(), filepath))
             data_h5 = h5py.File(filepath)
@@ -85,11 +93,11 @@ if __name__ == '__main__':
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
             print('{}-{:d} testing batches.'.format(datetime.now(), batch_num))
-            for batch_idx in trange(batch_num, ncols=60):
+            for batch_idx in trange(batch_num, ncols=80):
                 points_batch = data[[batch_idx] * batch_size, ...]
-                point_num = data_num[batch_idx]  # 4096
+                point_num = data_num[batch_idx]
 
-                tile_num = math.ceil((sample_num * batch_size) / point_num)  # 8192 / 4096 = 2
+                tile_num = math.ceil((sample_num * batch_size) / point_num)
                 indices_shuffle = np.tile(np.arange(point_num), tile_num)[0:sample_num * batch_size]
                 np.random.shuffle(indices_shuffle)
                 indices_batch_shuffle = np.reshape(indices_shuffle, (batch_size, sample_num, 1))
@@ -114,9 +122,13 @@ if __name__ == '__main__':
                 labels_pred[batch_idx, 0:point_num] = np.array([label for label, _ in predictions])
                 confidences_pred[batch_idx, 0:point_num] = np.array([confidence for _, confidence in predictions])
 
-            scene_name = os.path.splitext(os.path.basename(filepath))[0]  # Get filename without extension
-            predictions_folder = os.path.join(os.path.dirname(args.load_ckpt), os.pardir, 'predictions')
-            filename_pred = os.path.join(predictions_folder, scene_name + '_pred.h5')
+            filename = filepath.stem  # Get filename without extension
+            predictions_folder = Path(args.load_ckpt).parent.parent / 'ScanNet_preds'
+            # Create subfolder
+            if not predictions_folder.exists():
+                Path.mkdir(predictions_folder, parents=True)
+            filename_pred = predictions_folder / (filename + '_pred.h5')
+
             print('{}-Saving {}...'.format(datetime.now(), filename_pred))
             file = h5py.File(filename_pred, 'w')
             file.create_dataset('data_num', data=data_num)
@@ -128,18 +140,25 @@ if __name__ == '__main__':
             file.close()
 
             if args.save_ply:
-                print('{}-Saving ply of {}...'.format(datetime.now(), filepath))
-                # Create subfolder
-                if not os.path.exists(os.path.dirname(predictions_folder)):
-                    os.makedirs(predictions_folder)
+                # print('{}-Saving ply of {}...'.format(datetime.now(), filepath))
+                # # Create point colors according to labels
+                # cmap = cm.get_cmap('tab20')
+                # label_max = setting.num_class
+                # cmap_LUT = [cmap(label / label_max)[:3] for label in range(label_max)]
+                # cmap_LUT[0] = (0.0, 0.0, 0.0)
+                # colors = np.array([cmap_LUT[label] for label in labels_pred.ravel()])
+                #
+                # data_utils.save_ply(data[:, :, 0:3].reshape(-1, 3),
+                #                     predictions_folder / 'PLY' / (filename + '_pred.ply'),
+                #                     colors)
 
-                # Create point colors according to labels
-                cmap = cm.get_cmap('tab20')
-                label_max = setting.num_class
-                cmap_LUT = [cmap(label / label_max)[:3] for label in range(label_max)]
-                cmap_LUT[0] = (0.0, 0.0, 0.0)
-                colors = np.array([cmap_LUT[label] for label in labels_pred.ravel()])
-
-                data_utils.save_ply(data.reshape(-1, 3), os.path.join(predictions_folder, scene_name + '.ply'), colors)
+                print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
+                filepath_label_ply = predictions_folder / 'PLY' / (filename + '_pred')
+                data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
+                                                   filepath_label_ply, data_num[...], setting.num_class)
             ######################################################################
         print('{}-Done!'.format(datetime.now()))
+
+
+if __name__ == '__main__':
+    main()
