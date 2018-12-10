@@ -20,7 +20,7 @@ import data_utils
 from meta_definitions import DATA_DIR, ROOT_DIR
 import pointfly as pf
 
-SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN', 'preprocessed')
+SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN', 'preprocessed_rgb')
 
 
 class AttrDict(dict):
