@@ -20,6 +20,9 @@ from datetime import datetime
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--filelist', '-t', help='Path to input .h5 filelist (.txt)', required=True)
+    parser.add_argument('--dataset_descr',
+                        help='Description of the dataset used for testing, used as directory name for saving results',
+                        type=str, default='')
     parser.add_argument('--load_ckpt', '-l', help='Path to a check point file for load', required=True)
     parser.add_argument('--max_point_num', '-p', help='Max point number of each sample', type=int, default=8192)
     parser.add_argument('--repeat_num', '-r', help='Repeat number', type=int, default=1)
@@ -27,7 +30,6 @@ def main():
     parser.add_argument('--setting', '-x', help='Setting to use', required=True)
     parser.add_argument('--save_ply', '-s', help='Save results as ply', action='store_true')
     args = parser.parse_args()
-    print(args)
 
     model = importlib.import_module(args.model)
     setting_path = os.path.join(os.path.dirname(__file__), args.model)
@@ -37,6 +39,17 @@ def main():
     sample_num = setting.sample_num
     max_point_num = args.max_point_num
     batch_size = args.repeat_num * math.ceil(max_point_num / sample_num)
+
+    ######################################################################
+    # First, create designated output folder. Abort if it already exists to prevent accidental overwriting.
+    model_dir = os.path.abspath(os.path.join(args.load_ckpt, '../..'))  # Get this model's specific file directory
+    preds_folder = os.path.join(model_dir, args.dataset_descr + '_preds')
+    try:
+        os.mkdir(preds_folder)
+    except FileExistsError:
+        print('{}-Output folder {} already exists. Aborting.'.format(datetime.now(), preds_folder), file=sys.stderr)
+        sys.exit(1)
+    ######################################################################
 
     ######################################################################
     # Placeholders
@@ -118,9 +131,11 @@ def main():
                 labels_pred[batch_idx, 0:point_num] = np.array([label for label, _ in predictions])
                 confidences_pred[batch_idx, 0:point_num] = np.array([confidence for _, confidence in predictions])
 
-            filename_pred = filename[:-3] + '_pred.h5'
-            print('{}-Saving {}...'.format(datetime.now(), filename_pred))
-            file = h5py.File(filename_pred, 'w')
+
+            h5_name = os.path.splitext(os.path.split(filename)[1])[0] + '_pred.h5'  # Create a new file name
+            filepath_pred = os.path.join(preds_folder, h5_name)
+            print('{}-Saving {}...'.format(datetime.now(), filepath_pred))
+            file = h5py.File(filepath_pred, 'w')
             file.create_dataset('data_num', data=data_num)
             file.create_dataset('label_seg', data=labels_pred)
             file.create_dataset('confidence', data=confidences_pred)
@@ -130,8 +145,8 @@ def main():
             file.close()
 
             if args.save_ply:
-                print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
-                export_ply(data, data_num, filename_pred, labels_pred, setting)
+                print('{}-Saving ply of {}...'.format(datetime.now(), filepath_pred))
+                export_ply(data, data_num, filepath_pred, labels_pred, setting)
             ######################################################################
         print('{}-Done!'.format(datetime.now()))
 
