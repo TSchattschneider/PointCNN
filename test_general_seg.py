@@ -131,11 +131,15 @@ def main():
 
             if args.save_ply:
                 print('{}-Saving ply of {}...'.format(datetime.now(), filename_pred))
-                filepath_label_ply = os.path.join(filename_pred[:-3] + 'ply_label')
-                data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
-                                                   filepath_label_ply, data_num[...], setting.num_class)
+                export_ply(data, data_num, filename_pred, labels_pred, setting)
             ######################################################################
         print('{}-Done!'.format(datetime.now()))
+
+
+def export_ply(data, data_num, filename_pred, labels_pred, setting):
+    filepath_label_ply = os.path.join(filename_pred[:-3] + 'ply_label')
+    data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
+                                       filepath_label_ply, data_num[...], setting.num_class)
 
 
 if __name__ == '__main__':
