@@ -6,13 +6,13 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-from datetime import datetime
 import importlib
-import math
 import os
 import sys
+from datetime import datetime
 
 import h5py
+import math
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm, trange
@@ -146,12 +146,12 @@ def main():
 
             if args.save_ply:
                 print('{}-Saving ply of {}...'.format(datetime.now(), filepath_pred))
-                export_ply(data, data_num, filepath_pred, labels_pred, setting)
+                export_batches_to_ply(data, data_num, filepath_pred, labels_pred, setting)
             ######################################################################
         print('{}-Done!'.format(datetime.now()))
 
 
-def export_ply(data, data_num, filepath_pred, labels_pred, setting):
+def export_batches_to_ply(data, data_num, filepath_pred, labels_pred, setting):
     folder = os.path.join(os.path.dirname(filepath_pred), 'PLY')
     filename = os.path.splitext(os.path.basename(filepath_pred))[0] + 'ply_label'
     filepath_label_ply = os.path.join(folder, filename)
