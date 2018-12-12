@@ -5,17 +5,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
+from datetime import datetime
+import importlib
+import math
 import os
 import sys
-import math
+
 import h5py
-import argparse
-import importlib
-import data_utils
 import numpy as np
 import tensorflow as tf
-from tqdm import trange
-from datetime import datetime
+from tqdm import tqdm, trange
+
+import data_utils
 
 
 def main():
@@ -84,7 +86,7 @@ def main():
     with tf.Session() as sess:
         # Load the model
         saver.restore(sess, args.load_ckpt)
-        print('{}-Checkpoint loaded from {}!'.format(datetime.now(), args.load_ckpt))
+        tqdm.write('{}-Checkpoint loaded from {}!'.format(datetime.now(), args.load_ckpt))
 
         indices_batch_indices = np.tile(np.reshape(np.arange(batch_size), (batch_size, 1, 1)), (1, sample_num, 1))
 
@@ -129,7 +131,6 @@ def main():
                         predictions[point_idx] = [label, confidence]
                 labels_pred[batch_idx, 0:point_num] = np.array([label for label, _ in predictions])
                 confidences_pred[batch_idx, 0:point_num] = np.array([confidence for _, confidence in predictions])
-
 
             h5_name = os.path.splitext(os.path.split(filename)[1])[0] + '_pred.h5'  # Create a new file name
             filepath_pred = os.path.join(preds_folder, h5_name)
