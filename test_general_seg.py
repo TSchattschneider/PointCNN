@@ -151,8 +151,10 @@ def main():
         print('{}-Done!'.format(datetime.now()))
 
 
-def export_ply(data, data_num, filename_pred, labels_pred, setting):
-    filepath_label_ply = os.path.join(filename_pred[:-3] + 'ply_label')
+def export_ply(data, data_num, filepath_pred, labels_pred, setting):
+    folder = os.path.join(os.path.dirname(filepath_pred), 'PLY')
+    filename = os.path.splitext(os.path.basename(filepath_pred))[0] + 'ply_label'
+    filepath_label_ply = os.path.join(folder, filename)
     data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
                                        filepath_label_ply, data_num[...], setting.num_class)
 
