@@ -14,6 +14,7 @@ import importlib
 import data_utils
 import numpy as np
 import tensorflow as tf
+from tqdm import trange
 from datetime import datetime
 
 
@@ -100,9 +101,7 @@ def main():
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
             print('{}-{:d} testing batches.'.format(datetime.now(), batch_num))
-            for batch_idx in range(batch_num):
-                if batch_idx % 10 == 0:
-                    print('{}-Processing {} of {} batches.'.format(datetime.now(), batch_idx, batch_num))
+            for batch_idx in trange(batch_num):
                 points_batch = data[[batch_idx] * batch_size, ...]
                 point_num = data_num[batch_idx]
 
