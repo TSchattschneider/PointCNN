@@ -14,6 +14,8 @@ import argparse
 import numpy as np
 from datetime import datetime
 
+from tqdm import tqdm
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import data_utils
 
@@ -29,7 +31,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    root = args.folder if args.folder else '../../data/scannet/seg'
+    root = args.folder if args.folder else '../data/scannet/seg'
     max_point_num = args.max_point_num
 
     batch_size = 2048
@@ -43,7 +45,7 @@ def main():
     for dataset_idx, dataset in enumerate(datasets):
         filename = os.path.abspath(os.path.join(root, 'scannet_%s.pickle' % dataset))
 
-        print('{}-Loading {}...'.format(datetime.now(), filename))
+        tqdm.write('{}-Loading {}...'.format(datetime.now(), filename))
         file_pickle = open(filename, 'rb')
         xyz_all = pickle.load(file_pickle, encoding='latin1')
         labels_all = pickle.load(file_pickle, encoding='latin1')
@@ -55,6 +57,7 @@ def main():
             idx = 0
 
             for room_idx, xyz in enumerate(xyz_all):
+                progress = tqdm(total=batch_size)
                 # align to room bottom center
                 xyz_min = np.amin(xyz, axis=0, keepdims=True)
                 xyz_max = np.amax(xyz, axis=0, keepdims=True)
@@ -63,17 +66,17 @@ def main():
                 xyz = xyz - xyz_center
 
                 labels = labels_all[room_idx]
-                print('{}-Computing block id of {} points...'.format(datetime.now(), xyz.shape[0]))
+                # tqdm.write('{}-Computing block id of {} points...'.format(datetime.now(), xyz.shape[0]))
                 xyz_min = np.amin(xyz, axis=0, keepdims=True) - offset
                 xyz_max = np.amax(xyz, axis=0, keepdims=True)
                 block_size = (args.block_size, args.block_size, 2 * (xyz_max[0, -1] - xyz_min[0, -1]))
                 xyz_blocks = np.floor((xyz - xyz_min) / block_size).astype(np.int)
 
-                print('{}-Collecting points belong to each block...'.format(datetime.now(), xyz.shape[0]))
+                # tqdm.write('{}-Collecting points belong to each block...'.format(datetime.now(), xyz.shape[0]))
                 blocks, point_block_indices, block_point_counts = np.unique(xyz_blocks, return_inverse=True,
                                                                             return_counts=True, axis=0)
                 block_point_indices = np.split(np.argsort(point_block_indices), np.cumsum(block_point_counts[:-1]))
-                print('{}-{} is split into {} blocks.'.format(datetime.now(), dataset, blocks.shape[0]))
+                # tqdm.write('{}-{} is split into {} blocks.'.format(datetime.now(), dataset, blocks.shape[0]))
 
                 block_to_block_idx_map = dict()
                 for block_idx in range(blocks.shape[0]):
@@ -103,7 +106,7 @@ def main():
                         block_point_indices[block_idx] = np.array([], dtype=np.int)
                         block_merge_count = block_merge_count + 1
                         break
-                print('{}-{} of {} blocks are merged.'.format(datetime.now(), block_merge_count, blocks.shape[0]))
+                # tqdm.write('{}-{} of {} blocks are merged.'.format(datetime.now(), block_merge_count, blocks.shape[0]))
 
                 idx_last_non_empty_block = 0
                 for block_idx in reversed(range(blocks.shape[0])):
@@ -173,7 +176,7 @@ def main():
                             item_num = idx_in_batch + 1
                             filename_h5 = os.path.join(root, dataset, '%s_%d.h5' % (offset_name, idx_h5))
                             os.makedirs(os.path.dirname(filename_h5), exist_ok=True)
-                            print('{}-Saving {}...'.format(datetime.now(), filename_h5))
+                            tqdm.write('{}-Saving {}...'.format(datetime.now(), filename_h5))
 
                             file = h5py.File(filename_h5, 'w')
                             file.create_dataset('data', data=data[0:item_num, ...])
@@ -184,7 +187,7 @@ def main():
                             file.close()
 
                             if args.save_ply:
-                                print('{}-Saving ply of {}...'.format(datetime.now(), filename_h5))
+                                tqdm.write('{}-Saving ply of {}...'.format(datetime.now(), filename_h5))
                                 filepath_label_ply = os.path.join(root, dataset, 'ply_label',
                                                                   'label_%s_%d' % (offset_name, idx_h5))
                                 data_utils.save_ply_property_batch(data[0:item_num, :, 0:3],
@@ -193,6 +196,7 @@ def main():
 
                             idx_h5 = idx_h5 + 1
                         idx = idx + 1
+                        progress.update()
 
 
 if __name__ == '__main__':
