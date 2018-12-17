@@ -23,14 +23,14 @@ import data_utils
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--filelist', '-t', help='Path to input .h5 filelist (.txt)', required=True)
-    parser.add_argument('--dataset_descr',
-                        help='Description of the dataset used for testing, used as directory name for saving results',
-                        type=str, default='')
     parser.add_argument('--load_ckpt', '-l', help='Path to a check point file for load', required=True)
-    parser.add_argument('--max_point_num', '-p', help='Max point number of each sample', type=int, default=8192)
-    parser.add_argument('--repeat_num', '-r', help='Repeat number', type=int, default=1)
     parser.add_argument('--model', '-m', help='Model to use', required=True)
     parser.add_argument('--setting', '-x', help='Setting to use', required=True)
+    parser.add_argument('--experiment_descr',
+                        help='Description of the dataset used for testing, used as directory name for saving results',
+                        type=str, default='', required=True)
+    parser.add_argument('--max_point_num', '-p', help='Max point number of each sample', type=int, default=8192)
+    parser.add_argument('--repeat_num', '-r', help='Repeat number', type=int, default=1)
     parser.add_argument('--save_ply', '-s', help='Save results as ply', action='store_true')
     args = parser.parse_args()
 
@@ -46,7 +46,7 @@ def main():
     ######################################################################
     # First, create designated output folder. Abort if it already exists to prevent accidental overwriting.
     model_dir = os.path.abspath(os.path.join(args.load_ckpt, '../..'))  # Get this model's specific file directory
-    preds_folder = os.path.join(model_dir, args.dataset_descr + '_preds')
+    preds_folder = os.path.join(model_dir, args.experiment_descr + '_preds')
     try:
         os.mkdir(preds_folder)
     except FileExistsError:
