@@ -16,6 +16,7 @@ import h5py
 import math
 import numpy as np
 import tensorflow as tf
+from matplotlib import cm
 from tqdm import tqdm, trange
 
 import data_utils
@@ -75,6 +76,7 @@ def main():
         points_sampled = pts_fts_sampled
         features_sampled = None
 
+    print('{}-Creating network architecture...'.format(datetime.now()))
     net = model.Net(points_sampled, features_sampled, is_training, setting)
     seg_probs_op = tf.nn.softmax(net.logits, name='seg_probs')
 
@@ -104,7 +106,7 @@ def main():
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
             tqdm.write('{}-{:d} testing batches. Creating predictions...'.format(datetime.now(), batch_num))
-            for batch_idx in trange(batch_num):
+            for batch_idx in trange(batch_num, ncols=60):
                 points_batch = data[[batch_idx] * batch_size, ...]
                 point_num = data_num[batch_idx]
 
@@ -152,28 +154,41 @@ def main():
         tqdm.write('{}-Done!'.format(datetime.now()))
 
 
-def export_ply_blocks(batched_data, data_num, filepath_pred, labels_pred, setting):
+def export_ply_blocks(batched_data, data_num, filepath_pred, labels, setting):
     folder = os.path.join(os.path.dirname(filepath_pred), 'PLY')
     filename = os.path.splitext(os.path.basename(filepath_pred))[0]
     filepath_label_ply = os.path.join(folder, filename)
-    data_utils.save_ply_property_batch(batched_data[:, :, 0:3], labels_pred[...],
+    data_utils.save_ply_property_batch(batched_data[:, :, 0:3], labels[...],
                                        filepath_label_ply, data_num[...], setting.num_class)
 
 
-def export_ply_monolithic(batched_data, data_num, filepath_pred, labels_pred, setting):
+def export_ply_monolithic(batched_data, data_num, filepath_pred, batched_labels, setting):
     assert len(batched_data) == len(data_num)
+    assert batched_data.shape[0:2] == batched_labels.shape
 
-    # Take the the predefined valid number of points out of the batches and create a contiguous array of points.
-    tmp = []
-    for idx, batch in enumerate(batched_data):
+    # Take the the predefined valid number of points out of the batches and create a contiguous arrays.
+    tmp_data = []
+    tmp_labels = []
+    for idx, (data_batch, label_batch) in enumerate(zip(batched_data, batched_labels)):
         num_points = data_num[idx]
-        tmp.append(batch[:num_points])
-    d = np.vstack(tmp)
+        tmp_data.append(data_batch[:num_points])
+        tmp_labels.append(label_batch[:num_points])
+    data = np.concatenate(tmp_data)
+    labels = np.concatenate(tmp_labels)
+
+    # Create a lookup table (LUT) for efficient label-to-color mapping
+    cmap = cm.get_cmap('tab20')
+    label_max = setting.num_class
+    cmap_LUT = np.array([cmap(label / label_max)[:3] for label in range(label_max)])
+    cmap_LUT[0] = (0.0, 0.0, 0.0)
+
+    # Create segment colors according to the labels, using the color LUT
+    rgb_labels = cmap_LUT[labels]
 
     folder = Path(filepath_pred).parent / 'PLY'
     filename = Path(filepath_pred).with_suffix('.ply').name
     filepath_label_ply = folder / filename
-    data_utils.save_ply(d, str(filepath_label_ply))
+    data_utils.save_ply(data, str(filepath_label_ply), colors=rgb_labels)
 
 
 if __name__ == '__main__':
