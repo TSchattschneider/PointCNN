@@ -8,6 +8,7 @@ from __future__ import print_function
 import argparse
 import importlib
 import os
+from pathlib import Path
 import sys
 from datetime import datetime
 
@@ -92,8 +93,8 @@ def main():
 
         folder = os.path.dirname(args.filelist)
         filenames = [os.path.join(folder, line.strip()) for line in open(args.filelist)]
-        for filename in filenames:
-            print('{}-Reading {}...'.format(datetime.now(), filename))
+        for filename in filenames[:-10]:
+            tqdm.write('{}-Reading {}...'.format(datetime.now(), filename))
             data_h5 = h5py.File(filename)
             data = data_h5['data'][...].astype(np.float32)
             data_num = data_h5['data_num'][...].astype(np.int32)
@@ -102,7 +103,7 @@ def main():
             labels_pred = np.full((batch_num, max_point_num), -1, dtype=np.int32)
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
-            print('{}-{:d} testing batches.'.format(datetime.now(), batch_num))
+            tqdm.write('{}-{:d} testing batches. Creating predictions...'.format(datetime.now(), batch_num))
             for batch_idx in trange(batch_num):
                 points_batch = data[[batch_idx] * batch_size, ...]
                 point_num = data_num[batch_idx]
@@ -134,7 +135,7 @@ def main():
 
             h5_name = os.path.splitext(os.path.split(filename)[1])[0] + '_pred.h5'  # Create a new file name
             filepath_pred = os.path.join(preds_folder, h5_name)
-            print('{}-Saving {}...'.format(datetime.now(), filepath_pred))
+            tqdm.write('{}-Saving {}...'.format(datetime.now(), filepath_pred))
             file = h5py.File(filepath_pred, 'w')
             file.create_dataset('data_num', data=data_num)
             file.create_dataset('label_seg', data=labels_pred)
@@ -145,18 +146,34 @@ def main():
             file.close()
 
             if args.save_ply:
-                print('{}-Saving ply of {}...'.format(datetime.now(), filepath_pred))
-                export_batches_to_ply(data, data_num, filepath_pred, labels_pred, setting)
+                tqdm.write('{}-Saving ply of {}...'.format(datetime.now(), os.path.basename(filepath_pred)))
+                export_ply_monolithic(data, data_num, filepath_pred, labels_pred, setting)
             ######################################################################
-        print('{}-Done!'.format(datetime.now()))
+        tqdm.write('{}-Done!'.format(datetime.now()))
 
 
-def export_batches_to_ply(data, data_num, filepath_pred, labels_pred, setting):
+def export_ply_blocks(batched_data, data_num, filepath_pred, labels_pred, setting):
     folder = os.path.join(os.path.dirname(filepath_pred), 'PLY')
-    filename = os.path.splitext(os.path.basename(filepath_pred))[0] + 'ply_label'
+    filename = os.path.splitext(os.path.basename(filepath_pred))[0]
     filepath_label_ply = os.path.join(folder, filename)
-    data_utils.save_ply_property_batch(data[:, :, 0:3], labels_pred[...],
+    data_utils.save_ply_property_batch(batched_data[:, :, 0:3], labels_pred[...],
                                        filepath_label_ply, data_num[...], setting.num_class)
+
+
+def export_ply_monolithic(batched_data, data_num, filepath_pred, labels_pred, setting):
+    assert len(batched_data) == len(data_num)
+
+    # Create contiguous array of points by taking the appropriate number of points out of the batches.
+    tmp = []
+    for idx, batch in enumerate(batched_data):
+        num_points = data_num[idx]
+        tmp.append(batch[:num_points])
+    d = np.vstack(tmp)
+
+    folder = Path(filepath_pred).parent / 'PLY'
+    filename = Path(filepath_pred).with_suffix('.ply').name
+    filepath_label_ply = folder / filename
+    data_utils.save_ply(d, str(filepath_label_ply))
 
 
 if __name__ == '__main__':
