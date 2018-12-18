@@ -8,9 +8,9 @@ from __future__ import print_function
 import argparse
 import importlib
 import os
-from pathlib import Path
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import h5py
 import math
@@ -115,11 +115,11 @@ def main():
                 indices_batch = np.concatenate((indices_batch_indices, indices_batch_shuffle), axis=2)
 
                 seg_probs = sess.run([seg_probs_op],
-                                        feed_dict={
-                                            pts_fts: points_batch,
-                                            indices: indices_batch,
-                                            is_training: False,
-                                        })
+                                     feed_dict={
+                                         pts_fts: points_batch,
+                                         indices: indices_batch,
+                                         is_training: False,
+                                     })
                 probs_2d = np.reshape(seg_probs, (sample_num * batch_size, -1))
 
                 predictions = [(-1, 0.0)] * point_num
@@ -163,7 +163,7 @@ def export_ply_blocks(batched_data, data_num, filepath_pred, labels_pred, settin
 def export_ply_monolithic(batched_data, data_num, filepath_pred, labels_pred, setting):
     assert len(batched_data) == len(data_num)
 
-    # Create contiguous array of points by taking the appropriate number of points out of the batches.
+    # Take the the predefined valid number of points out of the batches and create a contiguous array of points.
     tmp = []
     for idx, batch in enumerate(batched_data):
         num_points = data_num[idx]
