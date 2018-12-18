@@ -115,7 +115,7 @@ def save_ply_property_batch(points_batch, property_batch, file_path, points_num=
                               property_max, file_path[batch_idx], cmap_name)
         else:
             save_ply_property(points_batch[batch_idx][:point_num], property_batch[batch_idx][:point_num],
-                              property_max, '%s_%04d%s' % (basename, batch_idx, ext), cmap_name)
+                              property_max, '%s_%3d%s' % (basename, batch_idx, ext), cmap_name)
 
 
 def save_ply_point_with_normal(data_sample, folder):
