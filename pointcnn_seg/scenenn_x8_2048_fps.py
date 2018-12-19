@@ -7,13 +7,13 @@ sample_num = 2048
 
 batch_size = 8
 
-num_epochs = 256
+num_epochs = 256000
 
 step_val = 2000
 
 label_weights = [0.0] * 1 + [1.0] * (num_class - 1)
 
-learning_rate_base = 0.005
+learning_rate_base = 0.001
 decay_steps = 5000
 decay_rate = 0.8
 learning_rate_min = 1e-6
@@ -62,8 +62,6 @@ optimizer = 'adam'
 epsilon = 1e-5
 
 data_dim = 3
-use_extra_features = True
-with_normal_feature = False
 with_X_transformation = True
 sorting_method = None
 
