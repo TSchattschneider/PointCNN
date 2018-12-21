@@ -1,0 +1,26 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ScanNet-Segmentation-Test" type="PythonConfigurationType" factoryName="Python" folderName="PointCNN inference" editBeforeRun="true" singleton="true">
+    <module name="PointCNN" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="CUDA_VISIBLE_DEVICES" value="0" />
+      <env name="LD_LIBRARY_PATH" value="/usr/local/cuda/extras/CUPTI/lib64:/usr/local/cuda/lib64" />
+    </envs>
+    <option name="SDK_HOME" value="/usr/bin/python3.6" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_general_seg.py" />
+    <option name="PARAMETERS" value="-t data/scannet_pointnet2/test_files.txt -l ../models/pretrained_scannet_PointCNN/iter-354000 -m pointcnn_seg -x scannet_x8_2048_fps -r 4" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>
