@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Retrain preptrained ScanNet - Last layer" type="PythonConfigurationType" factoryName="Python" folderName="PointCNN training">
+  <configuration default="false" name="Retrain pretrained ScanNet - Last layer" type="PythonConfigurationType" factoryName="Python" folderName="PointCNN training">
     <module name="PointCNN" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
