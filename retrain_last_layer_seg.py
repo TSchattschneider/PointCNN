@@ -37,7 +37,7 @@ def main():
     # Path of validation set ground truth file list (.txt)
     args.filelist_val = os.path.join(SCENENN_DIR, 'test_files.txt')
     # Path of a check point file to load
-    args.load_ckpt = '/home/tschath1/Thesis/models/pretrained_scannet_PointCNN/ckpts/iter-354000'
+    args.load_ckpt = os.path.join(ROOT_DIR, '..', 'models', 'pretrained_scannet', 'ckpts', 'iter-354000')
     # Base directory where model checkpoint and summary files get saved in separate subdirectories
     args.save_folder = os.path.join(ROOT_DIR, '..', 'models')
     # PointCNN model to use
