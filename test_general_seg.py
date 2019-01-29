@@ -174,6 +174,26 @@ def export_ply_monolithic(batched_data, data_num, filepath_pred, batched_labels,
         tmp_data.append(data_batch[:num_points])
         tmp_labels.append(label_batch[:num_points])
     data = np.concatenate(tmp_data)
+    labels = np.concatenate(tmp_labels).reshape(-1, 1)
+
+    folder = Path(filepath_pred).parent / 'PLY'
+    filename = Path(filepath_pred).with_suffix('.ply').name
+    filepath_label_ply = folder / filename
+    data_utils.save_ply(data, str(filepath_label_ply), labels=labels)
+
+
+def export_ply_monolithic_with_RGB_labels(batched_data, data_num, filepath_pred, batched_labels, setting):
+    assert len(batched_data) == len(data_num)
+    assert batched_data.shape[0:2] == batched_labels.shape
+
+    # Take the the predefined valid number of points out of the batches and create a contiguous arrays.
+    tmp_data = []
+    tmp_labels = []
+    for idx, (data_batch, label_batch) in enumerate(zip(batched_data, batched_labels)):
+        num_points = data_num[idx]
+        tmp_data.append(data_batch[:num_points])
+        tmp_labels.append(label_batch[:num_points])
+    data = np.concatenate(tmp_data)
     labels = np.concatenate(tmp_labels)
 
     # Create a lookup table (LUT) for efficient label-to-color mapping

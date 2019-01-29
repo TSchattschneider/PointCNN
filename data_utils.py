@@ -11,22 +11,25 @@ import plyfile
 from tqdm import trange
 
 
-def save_ply(points, filename, colors=None, normals=None):
+def save_ply(points, filename, colors=None, normals=None, labels=None):
     """Save a point cloud to a .ply file for visualization.
 
     Parameters
     ----------
-    points: numpy.ndarray
+    points: np.ndarray
         Numpy array in a (num_points, 3) format, so for 100 points this would be a 100 x 3 array.
         The three columns are for X, Y and Z.
 
     filename: str
         Full absolute output filepath
 
-    colors: numpy.ndarray
+    colors: np.ndarray
         Numpy array in a (num_points, 3) format, so for 100 points this would be a 100 x 3 array.
         The three columns are for R, G, and B, each scaled from 0.0 to 1.0.
         Can be omitted. If provided, the output file will get additional color data.
+
+    labels: np.ndarray
+        Numpy array in a (num_points, 1) format, contains a label for each point.
     """
     vertex = np.core.records.fromarrays(points.transpose(), names='x, y, z', formats='f4, f4, f4')
     n = len(vertex)
@@ -43,6 +46,11 @@ def save_ply(points, filename, colors=None, normals=None):
         assert len(vertex_color) == n
         desc = desc + vertex_color.dtype.descr
 
+    if labels is not None:
+        assert labels.size == points.shape[0]
+        labels_record = np.core.records.fromarrays(labels.transpose(), names='label', formats='u1')
+        desc = desc + labels_record.dtype.descr
+
     vertex_all = np.empty(n, dtype=desc)
 
     for prop in vertex.dtype.names:
@@ -55,6 +63,10 @@ def save_ply(points, filename, colors=None, normals=None):
     if colors is not None:
         for prop in vertex_color.dtype.names:
             vertex_all[prop] = vertex_color[prop]
+
+    if labels is not None:
+        for field in labels_record.dtype.names:
+            vertex_all[field] = labels_record[field]
 
     ply = plyfile.PlyData([plyfile.PlyElement.describe(vertex_all, 'vertex')], text=False)
     if not os.path.exists(os.path.dirname(filename)):
