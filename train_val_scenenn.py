@@ -20,7 +20,7 @@ import data_utils
 from meta_definitions import DATA_DIR, ROOT_DIR
 import pointfly as pf
 
-SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN', 'preprocessed_rgb')
+SCENENN_DIR = os.path.join(DATA_DIR, 'SceneNN', 'subsampled_8192')
 
 
 class AttrDict(dict):
@@ -34,7 +34,7 @@ def main():
     # Path of training set ground truth file list (.txt)
     args.filelist = os.path.join(SCENENN_DIR, 'train_files.txt')
     # Path of validation set ground truth file list (.txt)
-    args.filelist_val = os.path.join(SCENENN_DIR, 'validation_files.txt')
+    args.filelist_val = os.path.join(SCENENN_DIR, 'test_files.txt')
     # Path of a check point file to load
     args.load_ckpt = None
     # Base directory where model checkpoint and summary files get saved in separate subdirectories
@@ -207,7 +207,7 @@ def main():
             saver.restore(sess, args.load_ckpt)
             print('{}-Checkpoint loaded from {}!'.format(datetime.now(), args.load_ckpt))
 
-        for batch_idx_train in trange(batch_num):
+        for batch_idx_train in trange(batch_num, ncols=100):
             if (batch_idx_train % step_val == 0 and (batch_idx_train != 0 or args.load_ckpt is not None)) \
                     or batch_idx_train == batch_num - 1:
                 ######################################################################
@@ -291,7 +291,7 @@ def main():
                          labels_weights: weights_batch,
                          is_training: True,
                      })
-            if batch_idx_train % 10 == 0:
+            if batch_idx_train % 50 == 0:
                 loss, t_1_acc, t_1_per_class_acc, summaries = sess.run([loss_mean_op,
                                                                         t_1_acc_op,
                                                                         t_1_per_class_acc_op,
