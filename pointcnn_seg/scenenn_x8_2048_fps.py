@@ -5,7 +5,7 @@ num_class = 41
 
 sample_num = 2048
 
-batch_size = 8
+batch_size = 7
 
 num_epochs = 256000
 
