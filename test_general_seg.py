@@ -95,8 +95,8 @@ def main():
 
         folder = os.path.dirname(args.filelist)
         filenames = [os.path.join(folder, line.strip()) for line in open(args.filelist)]
-        for filename in filenames[:-10]:
-            tqdm.write('{}-Reading {}...'.format(datetime.now(), filename))
+        for filename in tqdm(filenames, ncols=80):
+            # tqdm.write('{}-Reading {}...'.format(datetime.now(), filename))
             data_h5 = h5py.File(filename)
             data = data_h5['data'][...].astype(np.float32)
             data_num = data_h5['data_num'][...].astype(np.int32)
@@ -105,8 +105,8 @@ def main():
             labels_pred = np.full((batch_num, max_point_num), -1, dtype=np.int32)
             confidences_pred = np.zeros((batch_num, max_point_num), dtype=np.float32)
 
-            tqdm.write('{}-{:d} testing batches. Creating predictions...'.format(datetime.now(), batch_num))
-            for batch_idx in trange(batch_num, ncols=60):
+            # tqdm.write('{}-{:d} testing batches. Creating predictions...'.format(datetime.now(), batch_num))
+            for batch_idx in range(batch_num):
                 points_batch = data[[batch_idx] * batch_size, ...]
                 point_num = data_num[batch_idx]
 
@@ -137,7 +137,7 @@ def main():
 
             h5_name = os.path.splitext(os.path.split(filename)[1])[0] + '_pred.h5'  # Create a new file name
             filepath_pred = os.path.join(preds_folder, h5_name)
-            tqdm.write('{}-Saving {}...'.format(datetime.now(), filepath_pred))
+            # tqdm.write('{}-Saving {}...'.format(datetime.now(), filepath_pred))
             file = h5py.File(filepath_pred, 'w')
             file.create_dataset('data_num', data=data_num)
             file.create_dataset('label_seg', data=labels_pred)
@@ -148,7 +148,7 @@ def main():
             file.close()
 
             if args.save_ply:
-                tqdm.write('{}-Saving ply of {}...'.format(datetime.now(), os.path.basename(filepath_pred)))
+                # tqdm.write('{}-Saving ply of {}...'.format(datetime.now(), os.path.basename(filepath_pred)))
                 export_ply_monolithic(data, data_num, filepath_pred, labels_pred, setting)
             ######################################################################
         tqdm.write('{}-Done!'.format(datetime.now()))
