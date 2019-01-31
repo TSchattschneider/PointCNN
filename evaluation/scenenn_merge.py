@@ -52,7 +52,8 @@ def main(args):
         labels_seg, indices, confidence, data_num = data_tuple  # Unpack data
 
         for i in range(labels_seg.shape[0]):
-            # XXX Es gibt höhere Indices als total_data_num
+            # XXX Error: There are bigger indices than there is
+            #   data as indicated by the data_num
             merged_label_zero[indices[i][:data_num[i]]] = labels_seg[i][:data_num[i]]
             merged_confidence_zero[indices[i][:data_num[i]]] = confidence[i][:data_num[i]]
 
