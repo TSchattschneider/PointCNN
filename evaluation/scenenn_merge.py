@@ -27,7 +27,7 @@ def main(args):
     for filepath in file_list:
         with h5py.File(filepath, 'r') as h5file:
             labels_seg = np.array(h5file['label_seg'])
-            indices = np.array(h5file['indices_split_to_full'])
+            indices = h5file['indices_split_to_full'][:, :, 1]
             confidence = np.array(h5file['confidence'])
             data_num = np.array(h5file['data_num'])
 
@@ -52,6 +52,7 @@ def main(args):
         labels_seg, indices, confidence, data_num = data_tuple  # Unpack data
 
         for i in range(labels_seg.shape[0]):
+            # XXX Es gibt höhere Indices als total_data_num
             merged_label_zero[indices[i][:data_num[i]]] = labels_seg[i][:data_num[i]]
             merged_confidence_zero[indices[i][:data_num[i]]] = confidence[i][:data_num[i]]
 
@@ -62,9 +63,14 @@ def main(args):
             merged_label_half[indices[i][:data_num[i]]] = labels_seg[i][:data_num[i]]
             merged_confidence_half[indices[i][:data_num[i]]] = confidence[i][:data_num[i]]
 
-    # TODO Create final_preds array
+    final_preds[merged_confidence_zero >= merged_confidence_half] = \
+        merged_label_zero[merged_confidence_zero >= merged_confidence_half]
+    final_preds[merged_confidence_zero < merged_confidence_half] = \
+        merged_label_half[merged_confidence_zero < merged_confidence_half]
 
-    # TODO Save output to .npy file
+    np.save(output_filepath, final_preds)
+    print(f"Merged predictions saved to {output_filepath}")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
