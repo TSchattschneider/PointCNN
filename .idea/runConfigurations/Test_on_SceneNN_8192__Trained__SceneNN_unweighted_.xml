@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test on SceneNN_8192 (Trained: ScanNet)" type="PythonConfigurationType" factoryName="Python" folderName="PointCNN inference">
+  <configuration default="false" name="Test on SceneNN_8192 (Trained: SceneNN unweighted)" type="PythonConfigurationType" factoryName="Python" folderName="PointCNN inference">
     <module name="PointCNN" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -15,7 +15,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_general_seg.py" />
-    <option name="PARAMETERS" value="-t ../data/SceneNN/subsampled_8192/test_files.txt -l ../../models/pretrained_scannet/ckpts/iter-354000 -m pointcnn_seg -x scannet_x8_2048_fps -p 8192 -r 4 -s --experiment_descr SceneNN_8192" />
+    <option name="PARAMETERS" value="-t ../data/SceneNN/subsampled_8192/test_files.txt -l ../../models/scenenn_only_unweighted/ckpts/iter-106000 -m pointcnn_seg -x scenenn_x8_2048_fps -p 8192 -r 4 -s --experiment_descr SceneNN_8192" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
